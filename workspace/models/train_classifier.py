@@ -22,23 +22,49 @@ from sklearn.metrics import classification_report, f1_score
 from sklearn.model_selection import GridSearchCV
 
 def load_data(database_filepath):
+    """Loads a sqlite database in to parameters and target dataframes
+
+    Parameters:
+    database_filepath: path of the database
+
+    Returns:
+    labels 
+    categories
+    category names
+    """
     engine = create_engine('sqlite:///' + database_filepath)
-    df = pd.read_sql_table('InsertTableName', con=engine)
+    df = pd.read_sql_table('Database', con=engine)
     X = df['message']
     y = df.loc[:, 'related':'direct_report']
     return X, y, y.columns
 
 
 def tokenize(text):
+    ''' 
+    Tokenizes a text string using nltk's workd_tokenize. Then it removes english stop words. And finally lemmatizes the tokens with WordNetLemmatizer.
+
+    Parameters:
+    text: text to tokenize
+
+    Returns:
+    words: tokenized and lemmatized text array
+    '''
     words = word_tokenize(text)
-    lemmatizer = WordNetLemmatizer()
     words = [w for w in words if w not in stopwords.words("english")]
+    lemmatizer = WordNetLemmatizer()
     words = [lemmatizer.lemmatize(w).lower().strip() for w in words ]
     
     return words
 
 
 def build_model():
+    '''
+    Builds a machine learning pipeline for text classification.
+
+    Returns:
+    pipeline: CountVectorizer -> TfidfTransformer -> MultiOutputClassifier
+
+    '''
     return Pipeline([
         ('vect', CountVectorizer(tokenizer=tokenize)),
         ('tfidf', TfidfTransformer()),
@@ -47,13 +73,29 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    '''
+    Iterates a dataframe and evaluates a machine learning model using sklearns classification_report
+
+    Parameters:
+    model: sklearn model
+    X_test: testing dataset
+    Y_test: testing dataset
+    category_names: categories
+    '''
     y_pred = model.predict(X_test)
     for i in range(category_names.size):
-        print(category_names[i], ':', f1_score(Y_test.iloc[:, i], y_pred[:, i], average='weighted'))
+        print(category_names[i], ':', classification_report(Y_test.iloc[:, i], y_pred[:, i]))
 
 
 
 def save_model(model, model_filepath):
+    '''
+    Saves a sklearn model to a file
+
+    Parameters:
+    model: sklearn model
+    model_filepath: path to save the model
+    '''
     pickle.dump(model, open(model_filepath, 'wb'))
 
 

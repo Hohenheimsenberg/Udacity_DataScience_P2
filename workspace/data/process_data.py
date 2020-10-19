@@ -3,12 +3,23 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    """Loads two csv files and merges them on a pandas dataframe
+
+    Parameters:
+    messages_filepath: path to the messages csv file
+    categories_filepath: path to the categories csv file
+    """
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
     return messages.merge(categories, on='id')
 
 
 def clean_data(df):
+    """Splits the dataframe 'categories' column by ';' and creates a new column for each one. Then it drops the duplicate rows.
+
+    Parameters:
+    df: pandas dataframe
+    """
     expanded_cat = df.categories.str.split(';',expand=True)
     
     row = expanded_cat.loc[0]
@@ -29,7 +40,13 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
-    engine = create_engine('sqlite:///' + database_filename + '.db')
+    """Saves a dataframe to a sqlite database
+
+    Parameters:
+    df: pandas dataframe
+    database_filename: path of the database
+    """
+    engine = create_engine('sqlite:///' + database_filename)
     df.to_sql('Database', engine, index=False)  
 
 
