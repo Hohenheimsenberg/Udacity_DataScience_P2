@@ -59,17 +59,23 @@ def tokenize(text):
 
 def build_model():
     '''
-    Builds a machine learning pipeline for text classification.
+    Builds a machine learning pipeline for text classification. Uses GridSearch to find the optimal parameters
 
     Returns:
-    pipeline: CountVectorizer -> TfidfTransformer -> MultiOutputClassifier
+    pipeline: CountVectorizer -> TfidfTransformer -> MultiOutputClassifier -> RandomForestClassifier (using GridSearch)
 
     '''
-    return Pipeline([
-        ('vect', CountVectorizer(tokenizer=tokenize)),
-        ('tfidf', TfidfTransformer()),
-        ('clf', MultiOutputClassifier(RandomForestClassifier()))
-    ])
+    parameters = {
+        'clf__estimator__n_estimators' : [50, 100, 200],
+        'clf__estimator__criterion' : ['gini', 'entropy']
+    }
+    pipeline = Pipeline([
+                            ('vect', CountVectorizer(tokenizer=tokenize)),
+                            ('tfidf', TfidfTransformer()),
+                            ('clf', MultiOutputClassifier(RandomForestClassifier(n_jobs=-1)))
+                        ])
+    
+    return GridSearchCV(pipeline, parameters)
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
